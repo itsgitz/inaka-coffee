@@ -1,0 +1,53 @@
+---
+import MobileMenu from './MobileMenu.tsx';
+---
+
+<nav
+  id="navbar"
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+  style="background-color: transparent;"
+>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a
+        href="/"
+        class="text-xl font-bold text-white"
+        style="font-family: var(--font-serif);"
+      >
+        Inaka Coffee
+      </a>
+
+      <!-- Desktop nav links -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="#menu" class="text-white/90 hover:text-white transition-colors font-medium">
+          Menu
+        </a>
+        <a href="#wedding" class="text-white/90 hover:text-white transition-colors font-medium">
+          Wedding
+        </a>
+        <a href="#contact" class="text-white/90 hover:text-white transition-colors font-medium">
+          Contact
+        </a>
+      </div>
+
+      <!-- Mobile menu (React island) -->
+      <MobileMenu client:load />
+    </div>
+  </div>
+</nav>
+
+<script>
+  const navbar = document.getElementById('navbar');
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      navbar?.setAttribute(
+        'style',
+        'background-color: rgba(62, 39, 35, 0.95); backdrop-filter: blur(8px);'
+      );
+    } else {
+      navbar?.setAttribute('style', 'background-color: transparent;');
+    }
+  });
+</script>

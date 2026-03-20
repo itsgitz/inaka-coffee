@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sage: #4A5D4E;
+  --color-coffee: #3E2723;
+  --color-cream: #FFF8E1;
+  --color-sage-light: #6B7F6F;
+  --color-coffee-light: #6D4C41;
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-cream);
+  color: var(--color-coffee);
+}

@@ -1,11 +1,63 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import RamadanBanner from '../components/RamadanBanner.astro';
+import Navbar from '../components/Navbar.astro';
+import Hero from '../components/Hero.astro';
+import WeddingShowcase from '../components/WeddingShowcase.astro';
+import Footer from '../components/Footer.astro';
+import MenuGrid from '../components/MenuGrid.tsx';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import {
+  getHero,
+  getMenuCategories,
+  getMenuItems,
+  getWeddingInfo,
+  getBusinessInfo,
+} from '../lib/strapi';
+
+// Fetch all CMS data in parallel with graceful fallbacks
+const [hero, categories, items, weddingInfo, businessInfo] = await Promise.all([
+  getHero(),
+  getMenuCategories(),
+  getMenuItems(),
+  getWeddingInfo(),
+  getBusinessInfo(),
+]);
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+  title="Inaka Coffee — Kopi & Wedding Venue"
+  description="Nikmati kopi berkualitas di Inaka Coffee. Juga tersedia sebagai venue pernikahan outdoor yang elegan di tengah alam."
+>
+  <RamadanBanner />
+  <Navbar />
+  <Hero hero={hero} />
+
+  <!-- Menu section -->
+  <section id="menu" class="py-20 px-4" style="background-color: #FFF8E1;">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <p
+          class="text-sm font-semibold tracking-widest uppercase mb-3"
+          style="color: #4A5D4E;"
+        >
+          Menu Kami
+        </p>
+        <h2
+          class="text-4xl md:text-5xl font-bold mb-4"
+          style="font-family: var(--font-serif); color: #3E2723;"
+        >
+          Pilihan Kopi & Makanan
+        </h2>
+        <p class="text-lg max-w-xl mx-auto" style="color: rgba(62,39,35,0.65);">
+          Dari espresso klasik hingga minuman kreatif, semua dibuat dengan biji kopi pilihan.
+        </p>
+      </div>
+
+      <MenuGrid categories={categories} items={items} client:visible />
+    </div>
+  </section>
+
+  <WeddingShowcase weddingInfo={weddingInfo} businessInfo={businessInfo} />
+  <Footer businessInfo={businessInfo} />
 </Layout>

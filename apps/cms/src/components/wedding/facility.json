@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_wedding_facilities",
+  "info": {
+    "displayName": "Facility",
+    "description": "A wedding venue facility item"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

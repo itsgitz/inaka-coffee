@@ -1,0 +1,108 @@
+---
+import type { WeddingInfo, BusinessInfo } from '../types/strapi';
+import { resolveMediaUrl } from '../lib/strapi';
+import ReservationModal from './ReservationModal.tsx';
+
+interface Props {
+  weddingInfo: WeddingInfo;
+  businessInfo: BusinessInfo;
+}
+
+const { weddingInfo, businessInfo } = Astro.props;
+
+const galleryImages =
+  weddingInfo.galleryImages?.length > 0
+    ? weddingInfo.galleryImages.map((img) => resolveMediaUrl(img.url))
+    : [
+        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&q=80',
+        'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&q=80',
+        'https://images.unsplash.com/photo-1529636798458-92182e662485?w=600&q=80',
+        'https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=600&q=80',
+      ];
+
+const waLink = `https://wa.me/${businessInfo.whatsappNumber}?text=${encodeURIComponent(businessInfo.whatsappMessage)}`;
+---
+
+<section id="wedding" class="py-20 px-4" style="background-color: #3E2723;">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-16">
+      <p class="text-sm font-semibold tracking-widest uppercase mb-3" style="color: #4A5D4E;">
+        Venue Pernikahan
+      </p>
+      <h2
+        class="text-4xl md:text-5xl font-bold text-white mb-6"
+        style="font-family: var(--font-serif);"
+      >
+        {weddingInfo.title}
+      </h2>
+      <p class="text-white/70 text-lg max-w-2xl mx-auto">
+        Kapasitas hingga <strong class="text-white">{weddingInfo.capacity} tamu</strong> di tengah
+        suasana alam yang tenang dan elegan.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Facilities -->
+      <div>
+        <h3 class="text-2xl font-semibold text-white mb-6" style="font-family: var(--font-serif);">
+          Fasilitas
+        </h3>
+        <ul class="grid grid-cols-2 gap-4">
+          {
+            weddingInfo.facilities.map((facility) => (
+              <li class="flex items-center gap-3 text-white/85">
+                <span class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm"
+                  style="background-color: #4A5D4E;">
+                  ✓
+                </span>
+                <span>{facility.name}</span>
+              </li>
+            ))
+          }
+        </ul>
+
+        <!-- CTAs -->
+        <div class="flex flex-wrap gap-4 mt-10">
+          {
+            weddingInfo.pricelistPdf && (
+              <a
+                href={resolveMediaUrl(weddingInfo.pricelistPdf.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 px-6 py-3 rounded-full border-2 border-white/30 text-white font-medium hover:border-white/60 transition-colors"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download Pricelist
+              </a>
+            )
+          }
+
+          <ReservationModal
+            client:load
+            whatsappNumber={businessInfo.whatsappNumber}
+          />
+        </div>
+      </div>
+
+      <!-- Gallery grid -->
+      <div class="grid grid-cols-2 gap-3">
+        {
+          galleryImages.slice(0, 4).map((src, i) => (
+            <div class="aspect-square overflow-hidden rounded-xl">
+              <img
+                src={src}
+                alt={`Wedding venue ${i + 1}`}
+                class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                loading="lazy"
+              />
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,34 @@
+{
+  "kind": "singleType",
+  "collectionName": "business_infos",
+  "info": {
+    "singularName": "business-info",
+    "pluralName": "business-infos",
+    "displayName": "Business Info",
+    "description": "Business contact and operational information"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "whatsappNumber": {
+      "type": "string"
+    },
+    "whatsappMessage": {
+      "type": "text"
+    },
+    "mapCoordinates": {
+      "type": "string"
+    },
+    "mapEmbedUrl": {
+      "type": "text"
+    },
+    "ramadanHours": {
+      "type": "json"
+    },
+    "normalHours": {
+      "type": "json"
+    }
+  }
+}

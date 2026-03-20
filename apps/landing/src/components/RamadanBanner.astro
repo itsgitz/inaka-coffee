@@ -1,0 +1,28 @@
+---
+---
+
+<div
+  id="ramadan-banner"
+  class="w-full py-2 px-4 text-center text-sm font-medium text-white"
+  style="background-color: #4A5D4E;"
+>
+  <span>
+    🌙 Ramadan Special Hours: Buka pukul <strong>16:00 – 22:00</strong> — Selamat menjalankan ibadah puasa!
+  </span>
+  <button
+    id="close-banner"
+    class="ml-4 text-white/80 hover:text-white transition-colors"
+    aria-label="Tutup banner"
+  >
+    ✕
+  </button>
+</div>
+
+<script>
+  const banner = document.getElementById('ramadan-banner');
+  const closeBtn = document.getElementById('close-banner');
+
+  closeBtn?.addEventListener('click', () => {
+    banner?.remove();
+  });
+</script>
