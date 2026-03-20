@@ -1,0 +1,266 @@
+# Production Deployment Guide — Inaka Coffee
+
+Target: **Ubuntu 24.04 VM, SQLite, Nginx reverse proxy**
+
+---
+
+## 1. Server Prerequisites
+
+```bash
+# Node.js 22+ via nodesource
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Bun
+curl -fsSL https://bun.sh/install | bash
+
+# Other tools
+sudo apt-get install -y git nginx ufw
+
+# Create dedicated system user
+sudo useradd --system --create-home --shell /bin/bash inaka
+```
+
+---
+
+## 2. Clone & Install
+
+```bash
+sudo mkdir -p /opt/inaka-coffee
+sudo chown inaka:inaka /opt/inaka-coffee
+sudo -u inaka git clone https://github.com/itsgitz/inaka-coffee.git /opt/inaka-coffee
+
+cd /opt/inaka-coffee
+sudo -u inaka bun install
+sudo -u inaka bash -c "cd apps/cms && bun install"
+sudo -u inaka bash -c "cd apps/landing && bun install"
+```
+
+---
+
+## 3. Strapi CMS Production Setup
+
+### Environment variables
+
+Create `/opt/inaka-coffee/apps/cms/.env`:
+
+```env
+HOST=127.0.0.1
+PORT=1337
+APP_KEYS=your-app-key-1,your-app-key-2,your-app-key-3,your-app-key-4
+API_TOKEN_SALT=your-api-token-salt
+ADMIN_JWT_SECRET=your-admin-jwt-secret
+JWT_SECRET=your-jwt-secret
+TRANSFER_TOKEN_SALT=your-transfer-token-salt
+NODE_ENV=production
+```
+
+Generate secrets with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+### Build admin panel
+
+```bash
+sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/cms && NODE_ENV=production bun run build"
+```
+
+### Seed data
+
+```bash
+sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/cms && bun run seed:inaka"
+```
+
+### Database location
+
+SQLite database: `/opt/inaka-coffee/apps/cms/.tmp/data.db`
+
+---
+
+## 4. Astro Landing Production Setup
+
+### Environment variables
+
+Create `/opt/inaka-coffee/apps/landing/.env`:
+
+```env
+STRAPI_URL=http://127.0.0.1:1337
+STRAPI_TOKEN=your-read-only-api-token
+```
+
+Generate the API token in Strapi admin: **Settings → API Tokens → Create new API token** (Read-only).
+
+### Build static output
+
+```bash
+sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/landing && bun run build"
+```
+
+Output directory: `/opt/inaka-coffee/apps/landing/dist/`
+
+---
+
+## 5. Systemd Service Files
+
+### CMS service
+
+Create `/etc/systemd/system/inaka-cms.service`:
+
+```ini
+[Unit]
+Description=Inaka Coffee CMS (Strapi)
+After=network.target
+
+[Service]
+Type=simple
+User=inaka
+WorkingDirectory=/opt/inaka-coffee/apps/cms
+ExecStart=/usr/bin/bun run start
+Restart=on-failure
+RestartSec=10
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/inaka-coffee/apps/cms/.env
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable inaka-cms
+sudo systemctl start inaka-cms
+```
+
+---
+
+## 6. Nginx Configuration
+
+Create `/etc/nginx/sites-available/inaka-coffee`:
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    # Static landing page
+    root /opt/inaka-coffee/apps/landing/dist;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
+
+    # Static assets caching
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Landing page routes
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # CMS Admin
+    location /admin {
+        proxy_pass http://127.0.0.1:1337;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # CMS API
+    location /api {
+        proxy_pass http://127.0.0.1:1337;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # CMS Uploads
+    location /uploads {
+        proxy_pass http://127.0.0.1:1337;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        expires 1y;
+        add_header Cache-Control "public";
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/inaka-coffee /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+---
+
+## 7. SSL (Let's Encrypt)
+
+```bash
+sudo apt-get install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+Certbot auto-renews. Verify with:
+```bash
+sudo certbot renew --dry-run
+```
+
+---
+
+## 8. SQLite Backup
+
+### Setup backup directory
+
+```bash
+sudo mkdir -p /opt/backups/inaka-coffee
+sudo chown inaka:inaka /opt/backups/inaka-coffee
+```
+
+### Cron job (daily backup, keep 7 days)
+
+Add to `inaka` user's crontab (`sudo -u inaka crontab -e`):
+
+```cron
+0 2 * * * cp /opt/inaka-coffee/apps/cms/.tmp/data.db /opt/backups/inaka-coffee/data-$(date +\%Y\%m\%d).db && find /opt/backups/inaka-coffee/ -name "data-*.db" -mtime +7 -delete
+```
+
+---
+
+## 9. Firewall
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
+```
+
+---
+
+## 10. Updating
+
+```bash
+sudo -u inaka bash -c "cd /opt/inaka-coffee && git pull"
+
+# Rebuild CMS admin
+sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/cms && NODE_ENV=production bun run build"
+
+# Rebuild static landing
+sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/landing && bun run build"
+
+# Restart CMS service
+sudo systemctl restart inaka-cms
+```

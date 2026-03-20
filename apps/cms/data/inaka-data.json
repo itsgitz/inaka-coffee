@@ -1,0 +1,50 @@
+{
+  "hero": {
+    "headline": "A trip for coffee won't hurt your feet",
+    "subheadline": "Nikmati kopi berkualitas tinggi di tengah suasana alam yang tenang dan damai. Selamat datang di Inaka Coffee.",
+    "backgroundImage": "coffee-shadow.jpg"
+  },
+  "menuCategories": [
+    { "name": "Kopi", "slug": "kopi", "order": 1 },
+    { "name": "Non-Kopi", "slug": "non-kopi", "order": 2 },
+    { "name": "Makanan", "slug": "makanan", "order": 3 }
+  ],
+  "menuItems": [
+    { "name": "Americano", "price": 18000, "description": "Espresso dicairkan dengan air panas, menghasilkan rasa kopi yang kuat dan bersih.", "image": "coffee-art.jpg", "categorySlug": "kopi" },
+    { "name": "Cappuccino", "price": 25000, "description": "Espresso dengan steamed milk dan lapisan foam susu yang lembut dan creamy.", "image": "coffee-art.jpg", "categorySlug": "kopi" },
+    { "name": "Latte", "price": 25000, "description": "Espresso dengan steamed milk yang lebih banyak, menghasilkan rasa yang lembut dan mild.", "image": "coffee-art.jpg", "categorySlug": "kopi" },
+    { "name": "Espresso", "price": 15000, "description": "Kopi pekat single shot, dasar dari semua minuman berbasis espresso.", "image": "coffee-beans.jpg", "categorySlug": "kopi" },
+    { "name": "V60 Pour Over", "price": 28000, "description": "Manual brew dengan metode pour over, menonjolkan karakter unik biji kopi pilihan.", "image": "coffee-beans.jpg", "categorySlug": "kopi" },
+    { "name": "Matcha Latte", "price": 28000, "description": "Matcha Jepang berkualitas tinggi dipadukan dengan steamed milk yang creamy.", "image": "coffee-art.jpg", "categorySlug": "non-kopi" },
+    { "name": "Cokelat Panas", "price": 22000, "description": "Dark chocolate premium dicampur susu hangat, sempurna untuk menghangatkan hari.", "image": "coffee-art.jpg", "categorySlug": "non-kopi" },
+    { "name": "Croissant", "price": 20000, "description": "Croissant butter panggang segar, renyah di luar dan lembut di dalam.", "image": "coffee-art.jpg", "categorySlug": "makanan" },
+    { "name": "Nasi Goreng Kampung", "price": 35000, "description": "Nasi goreng khas kampung dengan bumbu tradisional, disajikan dengan telur dan kerupuk.", "image": "coffee-art.jpg", "categorySlug": "makanan" }
+  ],
+  "weddingInfo": {
+    "title": "Rayakan Momen Istimewa Anda di Inaka Coffee",
+    "description": "Inaka Coffee menawarkan venue pernikahan yang unik dan berkesan di tengah suasana alam yang tenang. Dengan kapasitas hingga 200 tamu, kami menyediakan pengalaman pernikahan yang tak terlupakan dengan pemandangan alam yang indah sebagai latar belakang.\n\nTim profesional kami siap membantu mewujudkan hari istimewa Anda dengan sentuhan personal dan perhatian terhadap setiap detail. Dari dekorasi hingga katering, kami memastikan semua berjalan sempurna.",
+    "capacity": 200,
+    "facilities": [
+      { "name": "Area Indoor & Outdoor", "icon": "building" },
+      { "name": "Sound System", "icon": "music" },
+      { "name": "Dekorasi", "icon": "sparkles" },
+      { "name": "Catering", "icon": "utensils" },
+      { "name": "Parkir Luas", "icon": "car" },
+      { "name": "Photobooth", "icon": "camera" }
+    ],
+    "galleryImages": ["coffee-art.jpg", "coffee-beans.jpg", "coffee-shadow.jpg"]
+  },
+  "businessInfo": {
+    "whatsappNumber": "6281234567890",
+    "whatsappMessage": "Halo Inaka Coffee, saya ingin bertanya tentang...",
+    "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3957.123456789!2d107.12345678!3d-6.12345678!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sInaka+Coffee!5e0!3m2!1sen!2sid!4v1234567890",
+    "normalHours": {
+      "Senin - Jumat": "08:00 - 22:00",
+      "Sabtu - Minggu": "08:00 - 23:00"
+    },
+    "ramadanHours": {
+      "Senin - Jumat": "16:00 - 22:00",
+      "Sabtu - Minggu": "14:00 - 22:00"
+    }
+  }
+}

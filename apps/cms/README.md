@@ -1,61 +1,76 @@
-# 🚀 Getting started with Strapi
+# Inaka Coffee CMS
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
-
-### `develop`
-
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
-
-```
-npm run develop
-# or
-yarn develop
-```
-
-### `start`
-
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
-
-```
-npm run start
-# or
-yarn start
-```
-
-### `build`
-
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
-
-```
-npm run build
-# or
-yarn build
-```
-
-## ⚙️ Deployment
-
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
-
-```
-yarn strapi deploy
-```
-
-## 📚 Learn more
-
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
-
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
-
-## ✨ Community
-
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
+Strapi 5 headless CMS powering the Inaka Coffee landing page. Uses SQLite for simple, file-based storage.
 
 ---
 
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+## Commands
+
+```bash
+# Development (with auto-reload)
+bun run develop
+
+# Build admin panel
+bun run build
+
+# Production start
+bun run start
+
+# Seed Inaka Coffee data (sets permissions + populates all content types)
+bun run seed:inaka
+```
+
+---
+
+## Content Types
+
+Five content types serve the landing page:
+
+| Content Type | Kind | Description |
+|-------------|------|-------------|
+| `hero` | Single Type | Landing page headline and background image |
+| `menu-category` | Collection | Menu categories (Kopi, Non-Kopi, Makanan) |
+| `menu-item` | Collection | Menu items with price, image, and category |
+| `wedding-info` | Single Type | Wedding venue info, facilities, gallery |
+| `business-info` | Single Type | WhatsApp number, operating hours, map |
+
+See [docs/strapi-schema-guide.md](../../docs/strapi-schema-guide.md) for full field reference.
+
+---
+
+## Environment Variables
+
+Create `apps/cms/.env`:
+
+```env
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS=key1,key2,key3,key4
+API_TOKEN_SALT=your-salt
+ADMIN_JWT_SECRET=your-secret
+JWT_SECRET=your-secret
+TRANSFER_TOKEN_SALT=your-salt
+```
+
+---
+
+## Seeding
+
+The seed script bootstraps all content in one command:
+
+```bash
+bun run seed:inaka
+```
+
+This will:
+1. Set public `find`/`findOne` permissions for all 5 content types
+2. Upload images from `data/uploads/`
+3. Create hero, menu categories, menu items, wedding info, and business info
+
+The seed runs only once — it checks a `inakaSeedHasRun` flag in the database. To re-seed, clear the database first (delete `.tmp/data.db`).
+
+---
+
+## Production Deployment
+
+See [docs/deployment.md](../../docs/deployment.md) for full Ubuntu 24.04 VM setup with Nginx and systemd.

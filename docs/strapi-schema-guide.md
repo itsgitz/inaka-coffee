@@ -98,11 +98,31 @@ The following content types are created via code in `apps/cms/src/api/`. Strapi 
 
 ---
 
-## 4. Running Both Apps
+## 4. Seeding Data
+
+The seed script sets permissions and populates all 5 content types automatically:
+
+```bash
+cd apps/cms && bun run seed:inaka
+```
+
+This handles:
+- Setting public `find`/`findOne` permissions for all content types
+- Uploading images from `data/uploads/`
+- Creating all sample content (hero, menu categories, menu items, wedding info, business info)
+
+The seed runs only once per database. To re-seed, delete `.tmp/data.db` and run again.
+
+---
+
+## 5. Running Both Apps
 
 ```bash
 # Terminal 1 — CMS
 cd apps/cms && bun run develop
+
+# After CMS is up, seed data (first time only):
+bun run seed:inaka
 
 # Terminal 2 — Landing
 cd apps/landing && bun run dev
@@ -112,10 +132,24 @@ The landing page uses fallback data when Strapi is not running, so it works stan
 
 ---
 
-## 5. Environment Variables
+## 6. Environment Variables
 
 `apps/landing/.env`:
 ```
 STRAPI_URL=http://localhost:1337
 STRAPI_TOKEN=your-api-token-here
 ```
+
+---
+
+## 7. Production Notes
+
+For production deployment on Ubuntu 24.04 with Nginx and systemd, see the full guide:
+[docs/deployment.md](./deployment.md)
+
+Key differences in production:
+- `HOST=127.0.0.1` (bind to localhost only — Nginx proxies external traffic)
+- `NODE_ENV=production` (required for Strapi)
+- Run `bun run build` to compile the admin panel before starting
+- Use a systemd service (`inaka-cms.service`) for process management
+- SQLite DB at `apps/cms/.tmp/data.db` — set up daily cron backup

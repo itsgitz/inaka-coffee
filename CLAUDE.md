@@ -1,4 +1,17 @@
 
+# Inaka Coffee — Project Rules
+
+## Project Structure
+
+This is a Bun monorepo with two apps:
+
+- `apps/landing/` — Astro 6 + React + Tailwind 4 static landing page (port 4321)
+- `apps/cms/` — Strapi 5 + SQLite headless CMS (port 1337)
+
+See `docs/README.md` for architecture overview and quick start.
+
+## Bun
+
 Default to using Bun instead of Node.js.
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
@@ -9,6 +22,16 @@ Default to using Bun instead of Node.js.
 - Use `bunx <package> <command>` instead of `npx <package> <command>`
 - Bun automatically loads .env, so don't use dotenv.
 
+## Module System
+
+Use ESM (`import`/`export`) everywhere. The root `package.json` sets `"type": "module"`.
+
+- Use `import` instead of `require()`
+- Use `export` / `export default` instead of `module.exports`
+- Use `import.meta.url` instead of `__filename` / `__dirname`
+
+**Exception:** `apps/cms/scripts/` seed scripts use CommonJS (`require`) because Strapi's bootstrap API (`createStrapi`, `compileStrapi`) does not support ESM entry points. Do not convert these scripts to ESM.
+
 ## APIs
 
 - `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
@@ -18,6 +41,14 @@ Default to using Bun instead of Node.js.
 - `WebSocket` is built-in. Don't use `ws`.
 - Prefer `Bun.file` over `node:fs`'s readFile/writeFile
 - Bun.$`ls` instead of execa.
+
+## CMS (Strapi)
+
+- Content types live in `apps/cms/src/api/`
+- Seed data: `apps/cms/data/inaka-data.json`
+- Seed script: `apps/cms/scripts/seed-inaka.js` — run with `bun run seed:inaka`
+- The seed sets public permissions for all 5 content types automatically
+- SQLite DB: `apps/cms/.tmp/data.db` — delete to reset and re-seed
 
 ## Testing
 
@@ -49,18 +80,6 @@ Bun.serve({
       },
     },
   },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
   development: {
     hmr: true,
     console: true,
@@ -69,38 +88,5 @@ Bun.serve({
 ```
 
 HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
