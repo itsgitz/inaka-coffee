@@ -49,6 +49,15 @@ Use ESM (`import`/`export`) everywhere. The root `package.json` sets `"type": "m
 - Seed script: `apps/cms/scripts/seed-inaka.js` — run with `bun run seed:inaka`
 - The seed sets public permissions for all 5 content types automatically
 - SQLite DB: `apps/cms/.tmp/data.db` — delete to reset and re-seed
+- PM2 config: `apps/cms/ecosystem.config.cjs` — production process manager
+
+## CI/CD & Deployment
+
+- **CI workflow**: `.github/workflows/ci-landing.yml` — triggers on push/PR to `master` for landing app changes; runs `bun install` + `astro build` with placeholder env vars
+- **Docker**: `apps/landing/Dockerfile` — multi-stage build (Bun + Astro → Nginx Alpine); `STRAPI_URL` and `STRAPI_TOKEN` are build-time args only
+- **Docker Compose**: `docker-compose.yml` at project root — `docker compose up -d --build`; env vars loaded from `apps/landing/.env` via `env_file`
+- **PM2**: `apps/cms/ecosystem.config.cjs` — Strapi process manager for production; `pm2 start apps/cms/ecosystem.config.cjs`
+- See `docs/deployment.md` for full production setup guide
 
 ## Testing
 

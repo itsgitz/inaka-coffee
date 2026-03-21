@@ -1,0 +1,27 @@
+services:
+  landing:
+    build:
+      context: ./apps/landing
+      dockerfile: Dockerfile
+      args:
+        STRAPI_URL: ${STRAPI_URL}
+        STRAPI_TOKEN: ${STRAPI_TOKEN}
+    env_file:
+      - ./apps/landing/.env
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  # cms:
+  #   build:
+  #     context: ./apps/cms
+  #   env_file:
+  #     - ./apps/cms/.env
+  #   ports:
+  #     - "1337:1337"
+  #   volumes:
+  #     - cms-data:/opt/app/.tmp
+  #   restart: unless-stopped
+
+# volumes:
+#   cms-data:

@@ -1,0 +1,40 @@
+name: CI — Landing
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/landing/**"
+      - "package.json"
+      - "bun.lock"
+  pull_request:
+    branches: [master]
+    paths:
+      - "apps/landing/**"
+      - "package.json"
+      - "bun.lock"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build landing
+        working-directory: apps/landing
+        env:
+          STRAPI_URL: http://localhost:1337
+          STRAPI_TOKEN: ci-placeholder
+        run: bun run build
+
+      - name: Verify build output
+        run: test -f apps/landing/dist/index.html && echo "Build output verified"

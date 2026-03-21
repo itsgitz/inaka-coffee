@@ -1,6 +1,6 @@
 # Production Deployment Guide — Inaka Coffee
 
-Target: **Ubuntu 24.04 VM, SQLite, Nginx reverse proxy**
+Target: **Ubuntu 24.04 VM, SQLite, Nginx reverse proxy, Docker (landing), PM2 (CMS)**
 
 ---
 
@@ -13,6 +13,10 @@ sudo apt-get install -y nodejs
 
 # Bun
 curl -fsSL https://bun.sh/install | bash
+
+# Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker inaka
 
 # Other tools
 sudo apt-get install -y git nginx ufw
@@ -33,7 +37,6 @@ sudo -u inaka git clone https://github.com/itsgitz/inaka-coffee.git /opt/inaka-c
 cd /opt/inaka-coffee
 sudo -u inaka bun install
 sudo -u inaka bash -c "cd apps/cms && bun install"
-sudo -u inaka bash -c "cd apps/landing && bun install"
 ```
 
 ---
@@ -78,11 +81,11 @@ SQLite database: `/opt/inaka-coffee/apps/cms/.tmp/data.db`
 
 ---
 
-## 4. Astro Landing Production Setup
+## 4. Astro Landing Production Setup (Docker)
 
 ### Environment variables
 
-Create `/opt/inaka-coffee/apps/landing/.env`:
+Create `/opt/inaka-coffee/apps/landing/.env` (see `apps/landing/.env.example`):
 
 ```env
 STRAPI_URL=http://127.0.0.1:1337
@@ -91,45 +94,51 @@ STRAPI_TOKEN=your-read-only-api-token
 
 Generate the API token in Strapi admin: **Settings → API Tokens → Create new API token** (Read-only).
 
-### Build static output
+### Build and run with Docker Compose
 
 ```bash
-sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/landing && bun run build"
+cd /opt/inaka-coffee
+sudo -u inaka docker compose up -d --build
 ```
 
-Output directory: `/opt/inaka-coffee/apps/landing/dist/`
+This builds the landing page Docker image (multi-stage: Bun build → Nginx Alpine) using `STRAPI_URL` and `STRAPI_TOKEN` from `apps/landing/.env` as build-time args. The final image serves static files only — no secrets baked in.
+
+Verify:
+```bash
+docker compose ps
+curl http://localhost:8080
+```
 
 ---
 
-## 5. Systemd Service Files
+## 5. PM2 — CMS Process Manager
 
-### CMS service
-
-Create `/etc/systemd/system/inaka-cms.service`:
-
-```ini
-[Unit]
-Description=Inaka Coffee CMS (Strapi)
-After=network.target
-
-[Service]
-Type=simple
-User=inaka
-WorkingDirectory=/opt/inaka-coffee/apps/cms
-ExecStart=/usr/bin/bun run start
-Restart=on-failure
-RestartSec=10
-Environment=NODE_ENV=production
-EnvironmentFile=/opt/inaka-coffee/apps/cms/.env
-
-[Install]
-WantedBy=multi-user.target
-```
+Install PM2:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable inaka-cms
-sudo systemctl start inaka-cms
+sudo -u inaka bun install -g pm2
+```
+
+Start the CMS:
+
+```bash
+sudo -u inaka bash -c "cd /opt/inaka-coffee && pm2 start apps/cms/ecosystem.config.cjs"
+```
+
+Save process list and enable auto-start on reboot:
+
+```bash
+sudo -u inaka pm2 save
+sudo env PATH=$PATH:/home/inaka/.bun/bin pm2 startup systemd -u inaka --hp /home/inaka
+```
+
+Useful PM2 commands:
+
+```bash
+pm2 status                  # Show process list
+pm2 logs inaka-cms          # Tail logs
+pm2 restart inaka-cms       # Restart CMS
+pm2 stop inaka-cms          # Stop CMS
 ```
 
 ---
@@ -143,23 +152,14 @@ server {
     listen 80;
     server_name yourdomain.com www.yourdomain.com;
 
-    # Static landing page
-    root /opt/inaka-coffee/apps/landing/dist;
-    index index.html;
-
-    # Gzip compression
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
-
-    # Static assets caching
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Landing page routes
+    # Landing page (served from Docker container)
     location / {
-        try_files $uri $uri/ /index.html;
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     # CMS Admin
@@ -255,12 +255,12 @@ sudo ufw enable
 ```bash
 sudo -u inaka bash -c "cd /opt/inaka-coffee && git pull"
 
-# Rebuild CMS admin
+# Rebuild and restart landing (Docker)
+sudo -u inaka docker compose up -d --build
+
+# Rebuild CMS admin panel
 sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/cms && NODE_ENV=production bun run build"
 
-# Rebuild static landing
-sudo -u inaka bash -c "cd /opt/inaka-coffee/apps/landing && bun run build"
-
-# Restart CMS service
-sudo systemctl restart inaka-cms
+# Restart CMS (PM2)
+sudo -u inaka pm2 restart inaka-cms
 ```
