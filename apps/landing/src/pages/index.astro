@@ -1,6 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import RamadanBanner from '../components/RamadanBanner.astro';
 import Navbar from '../components/Navbar.astro';
 import Hero from '../components/Hero.astro';
 import WeddingShowcase from '../components/WeddingShowcase.astro';
@@ -29,7 +28,6 @@ const [hero, categories, items, weddingInfo, businessInfo] = await Promise.all([
   title="Inaka Coffee — Kopi & Wedding Venue"
   description="Nikmati kopi berkualitas di Inaka Coffee. Juga tersedia sebagai venue pernikahan outdoor yang elegan di tengah alam."
 >
-  <RamadanBanner />
   <Navbar />
   <Hero hero={hero} />
 
