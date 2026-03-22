@@ -27,7 +27,65 @@ sudo useradd --system --create-home --shell /bin/bash inaka
 
 ---
 
-## 2. Clone & Install
+## 2. Environment Secrets (GitHub Actions)
+
+`.env` files are encrypted with AES-256-GCM and committed to git as `.env.enc`. The encrypted output is **base64-encoded plain text**, so it can be copied directly into GitHub Actions Secrets. The encryption password is stored as a separate GitHub Actions Secret and used to decode them in CI/CD.
+
+### One-time setup (local)
+
+Encrypt both apps' `.env` files and commit them:
+
+```bash
+bun run env:encode -- --app landing
+bun run env:encode -- --app cms
+git add apps/landing/.env.enc apps/cms/.env.enc
+git commit -m "chore: add encrypted env files"
+git push
+```
+
+### GitHub Actions Secret
+
+Go to **Settings → Secrets and variables → Actions** and add:
+
+| Name | Value |
+|------|-------|
+| `ENV_ENCODER_PASSWORD` | Your chosen encryption password |
+
+### Decode in CI workflow
+
+Add this step before any build or deploy step that needs the env files:
+
+```yaml
+- name: Decode env files
+  env:
+    ENV_ENCODER_PASSWORD: ${{ secrets.ENV_ENCODER_PASSWORD }}
+  run: |
+    ENV_ENCODER_PASSWORD="$ENV_ENCODER_PASSWORD" bun run env:decode -- --app landing
+    ENV_ENCODER_PASSWORD="$ENV_ENCODER_PASSWORD" bun run env:decode -- --app cms
+```
+
+### Decode on the server
+
+After cloning on the production server, decode before starting services:
+
+```bash
+ENV_ENCODER_PASSWORD="your-password" bun run env:decode -- --app landing
+ENV_ENCODER_PASSWORD="your-password" bun run env:decode -- --app cms
+```
+
+Or store the password in the server's environment:
+
+```bash
+export ENV_ENCODER_PASSWORD="your-password"
+bun run env:decode -- --app landing
+bun run env:decode -- --app cms
+```
+
+> To rotate secrets: update the `.env` files, re-run `env:encode`, commit the new `.enc` files, and update the GitHub Actions Secret with the new password.
+
+---
+
+## 3. Clone & Install
 
 ```bash
 sudo mkdir -p /opt/inaka-coffee
@@ -41,7 +99,7 @@ sudo -u inaka bash -c "cd apps/cms && bun install"
 
 ---
 
-## 3. Strapi CMS Production Setup
+## 4. Strapi CMS Production Setup
 
 ### Environment variables
 
@@ -81,7 +139,7 @@ SQLite database: `/opt/inaka-coffee/apps/cms/.tmp/data.db`
 
 ---
 
-## 4. Astro Landing Production Setup (Docker)
+## 5. Astro Landing Production Setup (Docker)
 
 ### Environment variables
 
@@ -111,7 +169,7 @@ curl http://localhost:8080
 
 ---
 
-## 5. PM2 — CMS Process Manager
+## 6. PM2 — CMS Process Manager
 
 Install PM2:
 
@@ -143,7 +201,7 @@ pm2 stop inaka-cms          # Stop CMS
 
 ---
 
-## 6. Nginx Configuration
+## 7. Nginx Configuration
 
 Create `/etc/nginx/sites-available/inaka-coffee`:
 
@@ -207,7 +265,7 @@ sudo systemctl reload nginx
 
 ---
 
-## 7. SSL (Let's Encrypt)
+## 8. SSL (Let's Encrypt)
 
 ```bash
 sudo apt-get install -y certbot python3-certbot-nginx
@@ -221,7 +279,7 @@ sudo certbot renew --dry-run
 
 ---
 
-## 8. SQLite Backup
+## 9. SQLite Backup
 
 ### Setup backup directory
 
@@ -240,7 +298,7 @@ Add to `inaka` user's crontab (`sudo -u inaka crontab -e`):
 
 ---
 
-## 9. Firewall
+## 10. Firewall
 
 ```bash
 sudo ufw allow OpenSSH
@@ -250,10 +308,15 @@ sudo ufw enable
 
 ---
 
-## 10. Updating
+## 11. Updating
 
 ```bash
 sudo -u inaka bash -c "cd /opt/inaka-coffee && git pull"
+
+# Re-decode env files if .enc files changed
+export ENV_ENCODER_PASSWORD="your-password"
+sudo -u inaka bash -c "cd /opt/inaka-coffee && ENV_ENCODER_PASSWORD='$ENV_ENCODER_PASSWORD' bun run env:decode -- --app landing"
+sudo -u inaka bash -c "cd /opt/inaka-coffee && ENV_ENCODER_PASSWORD='$ENV_ENCODER_PASSWORD' bun run env:decode -- --app cms"
 
 # Rebuild and restart landing (Docker)
 sudo -u inaka docker compose up -d --build
